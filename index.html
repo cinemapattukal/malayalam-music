@@ -1,0 +1,330 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Malayalam Music</title>
+<style>
+:root {
+  --bg:#121212;
+  --panel:#181818;
+  --muted:#b3b3b3;
+  --green:#1ed760;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:#000;
+  color:white;
+  font-family:Arial,sans-serif;
+}
+.app {
+  display:grid;
+  grid-template-columns:230px 1fr;
+  gap:8px;
+  height:calc(100dvh - 90px);
+  padding:8px;
+}
+.sidebar,.main {
+  background:var(--bg);
+  border-radius:8px;
+  overflow-y:auto;
+}
+.sidebar { padding:22px 16px; }
+.logo { font-size:23px;font-weight:bold;margin-bottom:30px; }
+.logo span { color:var(--green); }
+.nav {
+  display:block;
+  padding:13px 8px;
+  color:var(--muted);
+  text-decoration:none;
+  cursor:pointer;
+}
+.nav:hover,.nav.active { color:white; }
+.main { padding:24px; }
+.top {
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin-bottom:28px;
+}
+input {
+  background:#292929;
+  color:white;
+  border:1px solid transparent;
+  border-radius:24px;
+  padding:13px 18px;
+  width:min(100%,420px);
+  outline:none;
+}
+input:focus { border-color:white; }
+h2 { font-size:22px; }
+.grid {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:16px;
+}
+.card {
+  background:var(--panel);
+  padding:12px;
+  border-radius:8px;
+  cursor:pointer;
+  min-width:0;
+}
+.card:hover { background:#282828; }
+.cover {
+  width:100%;
+  aspect-ratio:1;
+  border-radius:5px;
+  object-fit:cover;
+  background:#303030;
+}
+.card h3 {
+  font-size:14px;
+  margin:12px 0 6px;
+  overflow-wrap:anywhere;
+}
+.card p {
+  font-size:12px;
+  color:var(--muted);
+  margin:0;
+}
+.play {
+  background:var(--green);
+  color:black;
+  border:0;
+  border-radius:50%;
+  width:42px;
+  height:42px;
+  font-size:19px;
+  cursor:pointer;
+}
+.player {
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:90px;
+  background:#181818;
+  border-top:1px solid #303030;
+  display:grid;
+  grid-template-columns:1fr 1.5fr 1fr;
+  align-items:center;
+  padding:12px 20px;
+  gap:12px;
+}
+.now { min-width:0;font-size:13px; }
+.now small { display:block;color:var(--muted);margin-top:5px; }
+.controls { text-align:center; }
+.controls button {
+  background:none;color:white;border:0;
+  font-size:20px;cursor:pointer;padding:5px 10px;
+}
+.controls .toggle { color:var(--green); }
+.progress {
+  display:flex;align-items:center;gap:9px;
+  color:var(--muted);font-size:11px;margin-top:8px;
+}
+input[type=range] {
+  padding:0;accent-color:var(--green);height:4px;
+}
+#seek { flex:1; }
+.volume { width:100%;max-width:110px; }
+.empty { color:var(--muted);font-size:14px; }
+@media(max-width:900px) {
+  .grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .app { grid-template-columns:175px 1fr; }
+  .main { padding:16px; }
+}
+@media(max-width:600px) {
+  .app {
+    grid-template-columns:1fr;
+    padding:0;
+    gap:0;
+    height:calc(100dvh - 145px);
+  }
+  .sidebar { display:none; }
+  .main { border-radius:0;padding:18px 12px; }
+  .grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+  .player {
+    height:145px;
+    grid-template-columns:1fr auto;
+    padding:12px;
+    gap:4px 10px;
+  }
+  .now { grid-column:1; }
+  .controls { grid-column:2;grid-row:1 / span 2; }
+  .controls .progress { width:145px; }
+  .controls button { padding:5px; }
+  .volume-box { display:none; }
+  .top { margin-bottom:20px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">♫ <span>Malayalam</span> Music</div>
+    <a class="nav active" href="#home">⌂ &nbsp; Home</a>
+    <a class="nav" href="#search">⌕ &nbsp; Search</a>
+    <a class="nav" href="#library">▤ &nbsp; Your Library</a>
+    <hr style="border-color:#303030;margin:22px 0">
+    <a class="nav" href="#playlists">＋ &nbsp; Create Playlist</a>
+    <a class="nav" href="#favorites">♥ &nbsp; Liked Songs</a>
+    <p class="empty" style="margin-top:35px">
+      Your Malayalam music collection
+    </p>
+  </aside>
+
+  <main class="main" id="home">
+    <div class="top" id="search">
+      <input id="searchInput"
+        placeholder="Search Malayalam songs, albums, singers..."
+        aria-label="Search music">
+    </div>
+    <h2 id="heading">Good evening</h2>
+    <p class="empty">Discover Malayalam music</p>
+    <h2>Popular Songs</h2>
+    <div class="grid" id="songs"></div>
+    <p class="empty" id="empty" hidden>No songs found.</p>
+  </main>
+</div>
+
+<footer class="player">
+  <div class="now">
+    <strong id="currentTitle">Choose a song</strong>
+    <small id="currentArtist">Malayalam Music</small>
+  </div>
+  <div class="controls">
+    <div>
+      <button id="prev" aria-label="Previous">|◀</button>
+      <button id="play" class="toggle" aria-label="Play">▶</button>
+      <button id="next" aria-label="Next">▶|</button>
+    </div>
+    <div class="progress">
+      <span id="elapsed">0:00</span>
+      <input id="seek" type="range" min="0" max="100"
+        value="0" aria-label="Song progress">
+      <span id="duration">0:00</span>
+    </div>
+  </div>
+  <div class="volume-box">
+    <label for="volume">Volume</label>
+    <input id="volume" class="volume" type="range"
+      min="0" max="1" step="0.05" value="0.8">
+  </div>
+</footer>
+
+<audio id="audio" preload="metadata"></audio>
+
+<script>
+const songs = [];
+let current = -1;
+
+const audio = document.getElementById('audio');
+const playBtn = document.getElementById('play');
+const seek = document.getElementById('seek');
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds)) return '0:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function renderSongs(list = songs) {
+  const grid = document.getElementById('songs');
+  grid.replaceChildren();
+
+  list.forEach(song => {
+    const card = document.createElement('article');
+    card.className = 'card';
+
+    const img = document.createElement('img');
+    img.className = 'cover';
+    img.alt = song.title;
+    img.src = song.cover || '';
+    img.loading = 'lazy';
+
+    const title = document.createElement('h3');
+    title.textContent = song.title;
+
+    const artist = document.createElement('p');
+    artist.textContent = song.artist;
+
+    card.append(img, title, artist);
+    card.addEventListener('click', () => playSong(song.id));
+    grid.append(card);
+  });
+
+  document.getElementById('empty').hidden = list.length > 0;
+}
+
+function playSong(id) {
+  const index = songs.findIndex(song => song.id === id);
+  if (index < 0) return;
+
+  current = index;
+  const song = songs[current];
+
+  audio.src = song.audio;
+  document.getElementById('currentTitle').textContent = song.title;
+  document.getElementById('currentArtist').textContent = song.artist;
+
+  audio.play().then(() => {
+    playBtn.textContent = 'Ⅱ';
+  }).catch(() => {
+    playBtn.textContent = '▶';
+  });
+}
+
+playBtn.addEventListener('click', () => {
+  if (current < 0) return;
+  if (audio.paused) {
+    audio.play().then(() => playBtn.textContent = 'Ⅱ')
+      .catch(() => {});
+  } else {
+    audio.pause();
+    playBtn.textContent = '▶';
+  }
+});
+
+document.getElementById('next').onclick = () => {
+  if (songs.length) playSong((current + 1) % songs.length);
+};
+document.getElementById('prev').onclick = () => {
+  if (songs.length) playSong((current - 1 + songs.length) % songs.length);
+};
+
+document.getElementById('volume').oninput = e => {
+  audio.volume = Number(e.target.value);
+};
+
+audio.ontimeupdate = () => {
+  document.getElementById('elapsed').textContent = formatTime(audio.currentTime);
+  seek.value = audio.duration ? audio.currentTime / audio.duration * 100 : 0;
+};
+audio.onloadedmetadata = () => {
+  document.getElementById('duration').textContent = formatTime(audio.duration);
+};
+audio.onended = () => {
+  if (songs.length) playSong((current + 1) % songs.length);
+};
+
+seek.oninput = () => {
+  if (audio.duration) audio.currentTime = Number(seek.value) / 100 * audio.duration;
+};
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  const q = e.target.value.toLocaleLowerCase();
+  renderSongs(songs.filter(s =>
+    `${s.title} ${s.artist} ${s.album}`.toLocaleLowerCase().includes(q)
+  ));
+});
+
+// Songs will be loaded from Firebase in the next stage.
+renderSongs();
+</script>
+</body>
+</html>
