@@ -185,9 +185,13 @@ input[type=range] {
     </div>
     <h2 id="heading">Good evening</h2>
     <p class="empty">Discover Malayalam music</p>
-    <h2>Popular Songs</h2>
+    <h2>Latest Albums</h2>
+    <div class="grid" id="albums"></div>
+    <p class="empty" id="albumsEmpty" hidden>No published albums yet.</p>
+    <h2 id="songsHeading">Popular Songs</h2>
     <div class="grid" id="songs"></div>
     <p class="empty" id="empty" hidden>No songs found.</p>
+    <button id="showAllSongs" class="play" style="display:none;width:auto;border-radius:20px;padding:8px 16px">Show all songs</button>
   </main>
 </div>
 
@@ -218,9 +222,16 @@ input[type=range] {
 
 <audio id="audio" preload="metadata"></audio>
 
-<script>
-const songs = [];
+<script type="module">
+import { db } from "./firebase.js";
+import {
+  collection, getDocs, query, where
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+let songs = [];
+let albums = [];
 let current = -1;
+let visibleSongs = [];
 
 const audio = document.getElementById('audio');
 const playBtn = document.getElementById('play');
@@ -233,6 +244,46 @@ function formatTime(seconds) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+function renderAlbums(list = albums) {
+  const grid = document.getElementById('albums');
+  grid.replaceChildren();
+
+  list.forEach(album => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    const img = document.createElement('img');
+    img.className = 'cover';
+    img.alt = album.name || 'Album cover';
+    img.src = album.cover || '';
+    img.loading = 'lazy';
+
+    const title = document.createElement('h3');
+    title.textContent = album.name || 'Untitled Album';
+    const year = document.createElement('p');
+    year.textContent = album.year ? String(album.year) : 'Malayalam Album';
+
+    const openAlbum = () => {
+      const albumName = (album.name || '').trim().toLocaleLowerCase();
+      visibleSongs = songs.filter(song =>
+        (song.album || '').trim().toLocaleLowerCase() === albumName
+      );
+      document.getElementById('songsHeading').textContent = `Songs from ${album.name}`;
+      document.getElementById('showAllSongs').style.display = 'inline-block';
+      renderSongs(visibleSongs);
+      document.getElementById('songsHeading').scrollIntoView({behavior:'smooth',block:'start'});
+    };
+    card.append(img, title, year);
+    card.addEventListener('click', openAlbum);
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openAlbum(); }
+    });
+    grid.append(card);
+  });
+  document.getElementById('albumsEmpty').hidden = list.length > 0;
+}
+
 function renderSongs(list = songs) {
   const grid = document.getElementById('songs');
   grid.replaceChildren();
@@ -240,38 +291,34 @@ function renderSongs(list = songs) {
   list.forEach(song => {
     const card = document.createElement('article');
     card.className = 'card';
-
     const img = document.createElement('img');
     img.className = 'cover';
-    img.alt = song.title;
+    img.alt = song.title || 'Song cover';
     img.src = song.cover || '';
     img.loading = 'lazy';
 
     const title = document.createElement('h3');
-    title.textContent = song.title;
-
+    title.textContent = song.title || 'Untitled Song';
     const artist = document.createElement('p');
-    artist.textContent = song.artist;
+    artist.textContent = song.artist || 'Malayalam Music';
 
     card.append(img, title, artist);
-    card.addEventListener('click', () => playSong(song.id));
+    card.addEventListener('click', () => playSong(song.id, list));
     grid.append(card);
   });
 
   document.getElementById('empty').hidden = list.length > 0;
 }
 
-function playSong(id) {
-  const index = songs.findIndex(song => song.id === id);
+function playSong(id, list = songs) {
+  const index = list.findIndex(song => song.id === id);
   if (index < 0) return;
-
   current = index;
-  const song = songs[current];
-
-  audio.src = song.audio;
-  document.getElementById('currentTitle').textContent = song.title;
-  document.getElementById('currentArtist').textContent = song.artist;
-
+  visibleSongs = list;
+  const song = list[current];
+  audio.src = song.audio || '';
+  document.getElementById('currentTitle').textContent = song.title || 'Unknown song';
+  document.getElementById('currentArtist').textContent = song.artist || 'Malayalam Music';
   audio.play().then(() => {
     playBtn.textContent = 'Ⅱ';
   }).catch(() => {
@@ -282,8 +329,7 @@ function playSong(id) {
 playBtn.addEventListener('click', () => {
   if (current < 0) return;
   if (audio.paused) {
-    audio.play().then(() => playBtn.textContent = 'Ⅱ')
-      .catch(() => {});
+    audio.play().then(() => playBtn.textContent = 'Ⅱ').catch(() => {});
   } else {
     audio.pause();
     playBtn.textContent = '▶';
@@ -291,10 +337,12 @@ playBtn.addEventListener('click', () => {
 });
 
 document.getElementById('next').onclick = () => {
-  if (songs.length) playSong((current + 1) % songs.length);
+  const list = visibleSongs.length ? visibleSongs : songs;
+  if (list.length) playSong(list[(current + 1) % list.length].id, list);
 };
 document.getElementById('prev').onclick = () => {
-  if (songs.length) playSong((current - 1 + songs.length) % songs.length);
+  const list = visibleSongs.length ? visibleSongs : songs;
+  if (list.length) playSong(list[(current - 1 + list.length) % list.length].id, list);
 };
 
 document.getElementById('volume').oninput = e => {
@@ -309,22 +357,51 @@ audio.onloadedmetadata = () => {
   document.getElementById('duration').textContent = formatTime(audio.duration);
 };
 audio.onended = () => {
-  if (songs.length) playSong((current + 1) % songs.length);
+  const list = visibleSongs.length ? visibleSongs : songs;
+  if (list.length) playSong(list[(current + 1) % list.length].id, list);
 };
-
 seek.oninput = () => {
   if (audio.duration) audio.currentTime = Number(seek.value) / 100 * audio.duration;
 };
 
 document.getElementById('searchInput').addEventListener('input', e => {
-  const q = e.target.value.toLocaleLowerCase();
+  const q = e.target.value.toLocaleLowerCase().trim();
   renderSongs(songs.filter(s =>
-    `${s.title} ${s.artist} ${s.album}`.toLocaleLowerCase().includes(q)
+    `${s.title || ''} ${s.artist || ''} ${s.album || ''}`.toLocaleLowerCase().includes(q)
   ));
 });
 
-// Songs will be loaded from Firebase in the next stage.
-renderSongs();
+document.getElementById('showAllSongs').addEventListener('click', () => {
+  visibleSongs = [];
+  document.getElementById('songsHeading').textContent = 'Popular Songs';
+  document.getElementById('showAllSongs').style.display = 'none';
+  renderSongs(songs);
+});
+
+async function loadMusic() {
+  try {
+    const [albumSnapshot, songSnapshot] = await Promise.all([
+      getDocs(query(collection(db, 'albums'), where('published', '==', true))),
+      getDocs(query(collection(db, 'songs'), where('published', '==', true)))
+    ]);
+    albums = albumSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
+    songs = songSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
+    visibleSongs = [];
+    renderAlbums();
+    renderSongs();
+  } catch (error) {
+    console.error('Could not load music from Firebase:', error);
+    document.getElementById('albumsEmpty').hidden = false;
+    document.getElementById('albumsEmpty').textContent =
+      'Could not load albums. Check Firebase configuration and Firestore rules.';
+    document.getElementById('empty').hidden = false;
+    document.getElementById('empty').textContent =
+      'Could not load songs. Check Firebase configuration and Firestore rules.';
+  }
+}
+
+audio.volume = 0.8;
+loadMusic();
 </script>
 </body>
 </html>
