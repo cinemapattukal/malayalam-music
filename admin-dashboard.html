@@ -1,0 +1,450 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Malayalam Music — Admin Dashboard</title>
+<style>
+:root{--bg:#121212;--panel:#202020;--green:#1ed760;--muted:#aaa}
+*{box-sizing:border-box}
+body{margin:0;background:#080808;color:#fff;font-family:Arial,sans-serif}
+header{padding:18px 22px;background:#181818;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-size:20px;font-weight:bold}.logo span{color:var(--green)}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0;border-radius:7px;padding:11px 15px}
+.primary{background:var(--green);color:#000;font-weight:bold}
+.secondary{background:#333;color:white}
+.danger{background:#5a2020;color:white}
+header button{padding:9px 13px}
+.layout{display:grid;grid-template-columns:205px 1fr;min-height:calc(100vh - 65px)}
+nav{padding:20px 12px;background:#111}
+nav button{display:block;width:100%;text-align:left;background:none;color:#bbb;margin-bottom:6px}
+nav button.active,nav button:hover{background:#292929;color:white}
+main{padding:24px;min-width:0}
+h1{font-size:26px;margin-top:0}
+h2{font-size:19px}
+.muted{color:var(--muted);font-size:13px;line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0}
+.stat,.panel{background:var(--panel);padding:17px;border-radius:10px}
+.stat strong{font-size:24px;display:block;margin-top:8px}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field label{display:block;font-size:13px;margin-bottom:7px;color:#ddd}
+.field input,.field select{width:100%;padding:12px;background:#101010;color:white;border:1px solid #444;border-radius:7px}
+.field.full{grid-column:1/-1}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+#notice{margin:15px 0;color:var(--green);overflow-wrap:anywhere}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:530px}
+td,th{text-align:left;padding:12px 8px;border-bottom:1px solid #383838}
+td button{margin:3px;padding:7px 9px;font-size:12px}
+.cover{width:42px;height:42px;object-fit:cover;border-radius:5px}
+.section{display:none}.section.active{display:block}
+@media(max-width:650px){
+ .layout{grid-template-columns:1fr}
+ nav{display:flex;gap:5px;overflow-x:auto;padding:9px}
+ nav button{white-space:nowrap;width:auto;margin:0;padding:10px}
+ main{padding:15px 12px}
+ .stats{gap:7px}
+ .stat{padding:11px}
+ .stat strong{font-size:20px}
+ .formgrid{grid-template-columns:1fr}
+ .field.full{grid-column:auto}
+ header{padding:14px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">♫ <span>Malayalam</span> Music Admin</div>
+  <button class="secondary" id="logout">Logout</button>
+</header>
+
+<div class="layout">
+<nav>
+  <button class="active" data-page="overview">▦ Dashboard</button>
+  <button data-page="songs">♫ Add Song</button>
+  <button data-page="albums">▣ Add Album</button>
+  <button data-page="singers">♙ Add Singer</button>
+  <button data-page="artists">♬ Add Artist</button>
+  <button data-page="library">☷ Manage Songs</button>
+</nav>
+
+<main>
+  <section class="section active" id="overview">
+    <h1>Dashboard</h1>
+    <p class="muted">Manage your Malayalam music collection.</p>
+    <div class="stats">
+      <div class="stat">Songs<strong id="songCount">0</strong></div>
+      <div class="stat">Albums<strong id="albumCount">0</strong></div>
+      <div class="stat">Singers<strong id="singerCount">0</strong></div>
+    </div>
+    <div class="panel">
+      <h2>Quick Start</h2>
+      <p class="muted">Add your first song using the Add Song menu. Only published songs are intended to appear on the public website.</p>
+      <button class="primary" data-goto="songs">＋ Add New Song</button>
+    </div>
+  </section>
+
+  <section class="section" id="songs">
+    <h1>Add Song</h1>
+    <p class="muted">Enter the song information and a playable audio URL.</p>
+    <form id="songForm" class="panel">
+      <div class="formgrid">
+        <div class="field">
+          <label for="songTitle">Song Name *</label>
+          <input id="songTitle" required maxlength="180">
+        </div>
+        <div class="field">
+          <label for="songArtist">Singer *</label>
+          <input id="songArtist" required maxlength="180">
+        </div>
+        <div class="field">
+          <label for="songAlbum">Album / Movie</label>
+          <input id="songAlbum" maxlength="180">
+        </div>
+        <div class="field">
+          <label for="songYear">Released Year</label>
+          <input id="songYear" type="number" min="1900" max="2100">
+        </div>
+        <div class="field full">
+          <label for="songAudio">Audio URL *</label>
+          <input id="songAudio" type="url" required placeholder="https://...">
+        </div>
+        <div class="field full">
+          <label for="songCover">Cover Image URL</label>
+          <input id="songCover" type="url" placeholder="https://...">
+        </div>
+        <div class="field">
+          <label for="songPublished">Publication</label>
+          <select id="songPublished">
+            <option value="false">Draft — hidden</option>
+            <option value="true">Published — public</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" type="submit">Save Song</button>
+        <button class="secondary" type="reset">Clear</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="section" id="albums">
+    <h1>Add Album</h1>
+    <form id="albumForm" class="panel">
+      <div class="formgrid">
+        <div class="field">
+          <label for="albumName">Album / Movie Name *</label>
+          <input id="albumName" required maxlength="180">
+        </div>
+        <div class="field">
+          <label for="albumYear">Released Year</label>
+          <input id="albumYear" type="number" min="1900" max="2100">
+        </div>
+        <div class="field full">
+          <label for="albumCover">Cover Image URL</label>
+          <input id="albumCover" type="url">
+        </div>
+        <div class="field">
+          <label for="albumPublished">Publication</label>
+          <select id="albumPublished">
+            <option value="false">Draft — hidden</option>
+            <option value="true">Published — public</option>
+          </select>
+        </div>
+      </div>
+      <div class="actions"><button class="primary">Save Album</button></div>
+    </form>
+  </section>
+
+  <section class="section" id="singers">
+    <h1>Add Singer</h1>
+    <form id="singerForm" class="panel">
+      <div class="formgrid">
+        <div class="field">
+          <label for="singerName">Singer Name *</label>
+          <input id="singerName" required maxlength="180">
+        </div>
+        <div class="field">
+          <label for="singerImage">Image URL</label>
+          <input id="singerImage" type="url">
+        </div>
+      </div>
+      <div class="actions"><button class="primary">Save Singer</button></div>
+    </form>
+  </section>
+
+  <section class="section" id="artists">
+    <h1>Add Artist / Music Director</h1>
+    <form id="artistForm" class="panel">
+      <div class="formgrid">
+        <div class="field">
+          <label for="artistName">Artist Name *</label>
+          <input id="artistName" required maxlength="180">
+        </div>
+        <div class="field">
+          <label for="artistImage">Image URL</label>
+          <input id="artistImage" type="url">
+        </div>
+      </div>
+      <div class="actions"><button class="primary">Save Artist</button></div>
+    </form>
+  </section>
+
+  <section class="section" id="library">
+    <h1>Manage Songs</h1>
+    <p class="muted">Publish, unpublish or delete songs in your database.</p>
+    <button class="secondary" id="refresh">Refresh List</button>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Cover</th><th>Song</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="songRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p id="notice" role="status" aria-live="polite"></p>
+</main>
+</div>
+
+<script type="module">
+import {auth, db, authReady} from "./firebase.js";
+import {
+  onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import {
+  collection, addDoc, getDocs, getDoc, doc, updateDoc,
+  deleteDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+const $ = id => document.getElementById(id);
+let adminReady = false;
+let songsCache = [];
+
+function notice(message) {
+  $("notice").textContent = message;
+}
+
+function showPage(id) {
+  document.querySelectorAll(".section").forEach(s =>
+    s.classList.toggle("active", s.id === id)
+  );
+  document.querySelectorAll("nav button[data-page]").forEach(b =>
+    b.classList.toggle("active", b.dataset.page === id)
+  );
+  if (id === "library") loadSongs();
+}
+
+document.querySelectorAll("[data-page]").forEach(button =>
+  button.addEventListener("click", () => showPage(button.dataset.page))
+);
+document.querySelectorAll("[data-goto]").forEach(button =>
+  button.addEventListener("click", () => showPage(button.dataset.goto))
+);
+
+async function checkAdmin(user) {
+  const snap = await getDoc(doc(db, "admins", user.uid));
+  return snap.exists()
+    && snap.data().active === true
+    && snap.data().role === "admin";
+}
+
+onAuthStateChanged(auth, async user => {
+  await authReady;
+  if (!user) {
+    window.location.replace("./admin.html");
+    return;
+  }
+  try {
+    if (!await checkAdmin(user)) {
+      await signOut(auth);
+      window.location.replace("./admin.html");
+      return;
+    }
+    adminReady = true;
+    await refreshCounts();
+    await loadSongs();
+  } catch (error) {
+    console.error(error);
+    notice("Could not verify admin access. Check Firestore rules.");
+  }
+});
+
+$("logout").addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.replace("./admin.html");
+});
+
+async function saveRecord(collectionName, data) {
+  if (!adminReady) throw new Error("Admin verification is incomplete.");
+  await addDoc(collection(db, collectionName), {
+    ...data,
+    createdAt: serverTimestamp()
+  });
+}
+
+$("songForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  try {
+    await saveRecord("songs", {
+      title: $("songTitle").value.trim(),
+      artist: $("songArtist").value.trim(),
+      album: $("songAlbum").value.trim(),
+      year: $("songYear").value ? Number($("songYear").value) : null,
+      audio: $("songAudio").value.trim(),
+      cover: $("songCover").value.trim(),
+      published: $("songPublished").value === "true"
+    });
+    event.target.reset();
+    notice("Song saved successfully.");
+    await refreshCounts();
+    await loadSongs();
+  } catch (error) {
+    console.error(error);
+    notice("Could not save song. Check Admin access and Firestore rules.");
+  }
+});
+
+$("albumForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  try {
+    await saveRecord("albums", {
+      name: $("albumName").value.trim(),
+      year: $("albumYear").value ? Number($("albumYear").value) : null,
+      cover: $("albumCover").value.trim(),
+      published: $("albumPublished").value === "true"
+    });
+    event.target.reset();
+    notice("Album saved successfully.");
+    await refreshCounts();
+  } catch (error) {
+    console.error(error);
+    notice("Could not save album. Check Admin access and Firestore rules.");
+  }
+});
+
+$("singerForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  try {
+    await saveRecord("singers", {
+      name: $("singerName").value.trim(),
+      image: $("singerImage").value.trim(),
+      published: true
+    });
+    event.target.reset();
+    notice("Singer saved successfully.");
+    await refreshCounts();
+  } catch (error) {
+    console.error(error);
+    notice("Could not save singer. Check Admin access and Firestore rules.");
+  }
+});
+
+$("artistForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  try {
+    await saveRecord("artists", {
+      name: $("artistName").value.trim(),
+      image: $("artistImage").value.trim(),
+      published: true
+    });
+    event.target.reset();
+    notice("Artist saved successfully.");
+    await refreshCounts();
+  } catch (error) {
+    console.error(error);
+    notice("Could not save artist. Check Admin access and Firestore rules.");
+  }
+});
+
+async function getCollection(name) {
+  const snapshot = await getDocs(collection(db, name));
+  return snapshot.docs.map(d => ({id:d.id, ...d.data()}));
+}
+
+async function refreshCounts() {
+  const [songs, albums, singers] = await Promise.all([
+    getCollection("songs"),
+    getCollection("albums"),
+    getCollection("singers")
+  ]);
+  $("songCount").textContent = songs.length;
+  $("albumCount").textContent = albums.length;
+  $("singerCount").textContent = singers.length;
+}
+
+async function loadSongs() {
+  if (!adminReady) return;
+  try {
+    songsCache = await getCollection("songs");
+    const tbody = $("songRows");
+    tbody.replaceChildren();
+
+    for (const song of songsCache) {
+      const tr = document.createElement("tr");
+      const coverCell = document.createElement("td");
+      if (song.cover) {
+        const img = document.createElement("img");
+        img.className = "cover";
+        img.src = song.cover;
+        img.alt = "";
+        coverCell.append(img);
+      } else {
+        coverCell.textContent = "—";
+      }
+
+      const nameCell = document.createElement("td");
+      nameCell.textContent = song.title || "Untitled";
+
+      const statusCell = document.createElement("td");
+      statusCell.textContent = song.published ? "Published" : "Draft";
+
+      const actionsCell = document.createElement("td");
+      const toggle = document.createElement("button");
+      toggle.className = "secondary";
+      toggle.textContent = song.published ? "Unpublish" : "Publish";
+      toggle.addEventListener("click", async () => {
+        try {
+          await updateDoc(doc(db, "songs", song.id), {
+            published: !song.published
+          });
+          notice("Song status updated.");
+          await loadSongs();
+        } catch (error) {
+          console.error(error);
+          notice("Could not update song.");
+        }
+      });
+
+      const remove = document.createElement("button");
+      remove.className = "danger";
+      remove.textContent = "Delete";
+      remove.addEventListener("click", async () => {
+        if (!confirm("Delete this song permanently?")) return;
+        try {
+          await deleteDoc(doc(db, "songs", song.id));
+          notice("Song deleted.");
+          await refreshCounts();
+          await loadSongs();
+        } catch (error) {
+          console.error(error);
+          notice("Could not delete song.");
+        }
+      });
+
+      actionsCell.append(toggle, remove);
+      tr.append(coverCell, nameCell, statusCell, actionsCell);
+      tbody.append(tr);
+    }
+  } catch (error) {
+    console.error(error);
+    notice("Could not load songs. Check Firestore rules.");
+  }
+}
+
+$("refresh").addEventListener("click", loadSongs);
+</script>
+</body>
+</html>
